@@ -1,0 +1,17 @@
+{
+  "name": "app-graphql",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "graphql-start": "GRAPHILE_ENV=development postgraphile -P postgraphile/presets/amber -e -c postgres://postgres:password@localhost:5432/app-graphql -s public --watch",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.11.1",
+  "dependencies": {
+    "postgraphile": "5.0.0-rc.3"
+  }
+}

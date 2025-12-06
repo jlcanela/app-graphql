@@ -1,0 +1,52 @@
+services:
+  postgres:
+    container_name: app-graphql
+    image: postgres:18.1-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: app-graphql
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    networks:
+      - jaeger-network
+    restart: unless-stopped
+
+  pgadmin:
+    container_name: app-graphql-pgadmin
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "8090:80"
+    networks:
+      - jaeger-network
+    restart: unless-stopped
+    depends_on:
+      - postgres
+
+  jaeger:
+    container_name: app-graphql-jaeger
+    image: cr.jaegertracing.io/jaegertracing/jaeger:2.11.0
+    ports:
+    - "16686:16686"
+    - "4317:4317"
+    - "4318:4318"
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+      - QUERY_BASE_PATH=/
+    networks:
+      - jaeger-network
+    restart: unless-stopped
+
+networks:
+  jaeger-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+
