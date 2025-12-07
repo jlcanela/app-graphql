@@ -1,0 +1,149 @@
+{
+  "name": "Go / No-Go for Build",
+  "type": "decisionTable",
+  "hitPolicy": "FIRST",
+  "inputs": [
+    { "name": "fundingSecured",        "type": "boolean" },
+    { "name": "architectureApproved",  "type": "boolean" },
+    { "name": "securityApproved",      "type": "boolean" },
+    { "name": "complianceApproved",    "type": "boolean" },
+    { "name": "teamCapacityOK",        "type": "boolean" },
+    { "name": "riskLevel",             "type": "string"  },   // low, medium, high, critical
+    { "name": "riskMitigationInPlace", "type": "boolean" },
+    { "name": "requirementsReadiness", "type": "number"  },   // 0-100
+    { "name": "overallReadinessScore", "type": "number"  }    // 0-100
+  ],
+  "outputs": [
+    { "name": "outcome",    "type": "string" },               // GO, GO_WITH_CONDITIONS, NO_GO, HOLD
+    { "name": "reason",     "type": "string" },
+    { "name": "conditions", "type": "array" }                 // array of strings with follow-up actions
+  ],
+  "rules": [
+    {
+      "name": "KO - Funding not secured",
+      "conditions": {
+        "fundingSecured": false
+      },
+      "result": {
+        "outcome": "NO_GO",
+        "reason": "Funding not secured for build phase",
+        "conditions": []
+      }
+    },
+    {
+      "name": "KO - Architecture not approved",
+      "conditions": {
+        "architectureApproved": false
+      },
+      "result": {
+        "outcome": "NO_GO",
+        "reason": "Architecture review not approved",
+        "conditions": []
+      }
+    },
+    {
+      "name": "KO - Security or compliance not approved",
+      "conditions": {
+        "$or": [
+          { "securityApproved": false },
+          { "complianceApproved": false }
+        ]
+      },
+      "result": {
+        "outcome": "NO_GO",
+        "reason": "Security and/or compliance approvals missing",
+        "conditions": []
+      }
+    },
+    {
+      "name": "KO - Critical unmitigated risks",
+      "conditions": {
+        "riskLevel": "critical",
+        "riskMitigationInPlace": false
+      },
+      "result": {
+        "outcome": "NO_GO",
+        "reason": "Unmitigated critical risks",
+        "conditions": []
+      }
+    },
+    {
+      "name": "HOLD - Team capacity missing",
+      "conditions": {
+        "teamCapacityOK": false
+      },
+      "result": {
+        "outcome": "HOLD",
+        "reason": "Key roles or capacity not available for build window",
+        "conditions": [
+          "Staff required roles and confirm team availability"
+        ]
+      }
+    },
+    {
+      "name": "GO - High readiness",
+      "conditions": {
+        "overallReadinessScore": { "$gte": 80 }
+      },
+      "result": {
+        "outcome": "GO",
+        "reason": "High overall readiness score",
+        "conditions": []
+      }
+    },
+    {
+      "name": "GO with conditions - Medium readiness & requirements gap",
+      "conditions": {
+        "overallReadinessScore": { "$gte": 60, "$lt": 80 },
+        "requirementsReadiness": { "$lt": 80 }
+      },
+      "result": {
+        "outcome": "GO_WITH_CONDITIONS",
+        "reason": "Medium readiness; requirements not fully clear",
+        "conditions": [
+          "Clarify and baseline critical requirements before first sprint",
+          "Review backlog and acceptance criteria with key stakeholders"
+        ]
+      }
+    },
+    {
+      "name": "GO with conditions - Medium readiness & dependency gap",
+      "conditions": {
+        "overallReadinessScore": { "$gte": 60, "$lt": 80 }
+      },
+      "result": {
+        "outcome": "GO_WITH_CONDITIONS",
+        "reason": "Medium readiness; proceed with specific follow-ups",
+        "conditions": [
+          "Confirm external dependencies and contracts",
+          "Review risk register and update mitigations during first sprint"
+        ]
+      }
+    },
+    {
+      "name": "NO GO - Low readiness",
+      "conditions": {
+        "overallReadinessScore": { "$lt": 60 }
+      },
+      "result": {
+        "outcome": "NO_GO",
+        "reason": "Overall readiness too low for build phase",
+        "conditions": [
+          "Improve requirements clarity, risk mitigations, and team readiness",
+          "Re-run GO / NO-GO after corrective actions"
+        ]
+      }
+    },
+    {
+      "name": "Default - Insufficient data",
+      "conditions": {},
+      "result": {
+        "outcome": "NO_GO",
+        "reason": "Insufficient or inconsistent input data for decision",
+        "conditions": [
+          "Provide all required gate inputs and re-evaluate"
+        ]
+      }
+    }
+  ]
+}
